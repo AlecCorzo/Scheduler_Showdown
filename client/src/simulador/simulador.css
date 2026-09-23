@@ -1,0 +1,147 @@
+/* El body global usa font-size: 24px (pensado para proyector). Este módulo
+   es más una mesa de trabajo que una pantalla de salón, así que lo bajamos
+   solo aquí para que el editor y los 4 cuadrantes quepan sin scroll. */
+.simulador {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  gap: 10px;
+  overflow: hidden;
+  font-size: 15px;
+}
+
+.simulador-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+
+.simulador-cabecera h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.editor-procesos {
+  flex-shrink: 0;
+}
+
+.editor-procesos table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.editor-procesos th,
+.editor-procesos td {
+  padding: 3px 8px;
+  text-align: left;
+}
+
+.editor-procesos input {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  font-size: 0.85rem;
+}
+
+.editor-procesos-acciones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 6px 0;
+}
+
+.quantum-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.quantum-editor input {
+  width: 4ch;
+}
+
+.boton-simular {
+  align-self: flex-start;
+  background: var(--color-opcion-4);
+  flex-shrink: 0;
+}
+
+.cuadrantes {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+}
+
+.cuadrante {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-lineas);
+  border-left: 6px solid var(--color-lineas);
+  border-radius: 8px;
+  padding: 8px 14px;
+  overflow: hidden;
+}
+
+.cuadrante.opcion-1 {
+  border-left-color: var(--color-opcion-1);
+}
+.cuadrante.opcion-2 {
+  border-left-color: var(--color-opcion-2);
+}
+.cuadrante.opcion-3 {
+  border-left-color: var(--color-opcion-3);
+}
+.cuadrante.opcion-4 {
+  border-left-color: var(--color-opcion-4);
+}
+
+.cuadrante-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
+.cuadrante-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cuadrante-cabecera h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.cuadrante-subtitulo {
+  font-size: 0.75rem;
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.boton-alterna {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  background: var(--color-lineas);
+}
+
+.cuadrante-gantt {
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+}

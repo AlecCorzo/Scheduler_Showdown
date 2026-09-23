@@ -13,12 +13,15 @@ interface Props {
   segmentos: Segmento[];
   titulo?: string;
   resaltar?: Resaltado;
+  /** Opcional: para nombres de proceso fuera de Ana/Beto/Caro/Dani (usado por el simulador). */
+  colorPorProceso?: Record<string, string>;
 }
 
 const ESCALA = 40; // px por minuto en el viewBox
 const ALTO = 56;
 
-export function Gantt({ segmentos, titulo, resaltar = null }: Props) {
+export function Gantt({ segmentos, titulo, resaltar = null, colorPorProceso }: Props) {
+  const colores = colorPorProceso ?? COLOR_PROCESO;
   const duracion = Math.max(...segmentos.map((s) => s.fin), 1);
 
   return (
@@ -40,7 +43,7 @@ export function Gantt({ segmentos, titulo, resaltar = null }: Props) {
                 y={4}
                 width={ancho}
                 height={ALTO - 20}
-                fill={COLOR_PROCESO[s.proceso] ?? '#a7b3d1'}
+                fill={colores[s.proceso] ?? '#a7b3d1'}
                 stroke={resaltado ? '#f3f5fa' : 'none'}
                 strokeWidth={resaltado ? 3 : 0}
               />

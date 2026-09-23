@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { socket } from '../socket.js';
 import type { Ack } from '../tipos.js';
 
@@ -79,6 +79,9 @@ export function Inicio() {
   return (
     <main className="inicio">
       <h1>Scheduler Showdown</h1>
+      <p className="aviso">
+        <Link to="/simulador">Abrir el simulador de algoritmos →</Link>
+      </p>
 
       <section className="tarjeta">
         <h2>Crear sala</h2>

@@ -6,6 +6,7 @@ import './estilos/tokens.css';
 import { Inicio } from './paginas/Inicio.js';
 import { Host } from './paginas/Host.js';
 import { Jugar } from './paginas/Jugar.js';
+import { Simulador } from './simulador/Simulador.js';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Inicio />} />
         <Route path="/host" element={<Host />} />
         <Route path="/jugar" element={<Jugar />} />
+        <Route path="/simulador" element={<Simulador />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
