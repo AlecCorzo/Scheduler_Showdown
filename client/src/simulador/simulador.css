@@ -1,6 +1,13 @@
 /* El body global usa font-size: 24px (pensado para proyector). Este módulo
    es más una mesa de trabajo que una pantalla de salón, así que lo bajamos
-   solo aquí para que el editor y los 4 cuadrantes quepan sin scroll. */
+   solo aquí para que el editor y los 4 cuadrantes quepan sin scroll.
+
+   La página usa la misma paleta clara de Inicio (fondo #ececec, texto teal
+   oscuro), pero los CUADRANTES se quedan con superficie oscura: el Gantt
+   (componentes/Gantt.tsx) pinta las etiquetas de los minutos en un gris
+   claro fijo pensado para fondo oscuro — si el cuadrante fuera claro, esas
+   etiquetas casi no se verían. Por eso el contraste queda "página clara,
+   paneles oscuros adentro", en vez de todo claro. */
 .simulador {
   height: 100vh;
   display: flex;
@@ -9,6 +16,8 @@
   gap: 10px;
   overflow: hidden;
   font-size: 15px;
+  background: var(--paleta-gris-claro);
+  color: var(--paleta-teal-oscuro);
 }
 
 .simulador-cabecera {
@@ -26,11 +35,7 @@
 .simulador-cabecera-acciones {
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-.boton-secundario {
-  background: var(--color-lineas);
+  gap: 12px;
 }
 
 .cuadrantes {
@@ -48,24 +53,24 @@
   display: flex;
   flex-direction: column;
   background: var(--color-superficie);
-  border: 1px solid var(--color-lineas);
+  color: var(--color-texto);
   border-left: 6px solid var(--color-lineas);
   border-radius: 8px;
   padding: 8px 14px;
   overflow: hidden;
 }
 
-.cuadrante.opcion-1 {
-  border-left-color: var(--color-opcion-1);
+.cuadrante.teal-oscuro {
+  border-left-color: var(--paleta-teal-oscuro);
 }
-.cuadrante.opcion-2 {
-  border-left-color: var(--color-opcion-2);
+.cuadrante.teal-medio {
+  border-left-color: var(--paleta-teal-medio);
 }
-.cuadrante.opcion-3 {
-  border-left-color: var(--color-opcion-3);
+.cuadrante.naranja {
+  border-left-color: var(--paleta-naranja);
 }
-.cuadrante.opcion-4 {
-  border-left-color: var(--color-opcion-4);
+.cuadrante.terracota {
+  border-left-color: var(--paleta-terracota);
 }
 
 .cuadrante-cabecera {
@@ -81,10 +86,32 @@
   margin: 0;
 }
 
+.cuadrante-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .boton-alterna {
   padding: 3px 10px;
   font-size: 0.75rem;
-  background: var(--color-lineas);
+  background: var(--paleta-teal-medio);
+}
+
+.boton-info {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--paleta-naranja);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cuadrante-gantt {
@@ -96,15 +123,56 @@
   align-items: center;
 }
 
-/* --- Modal de procesos ---
-   La estructura (posición, tamaño, scroll) vive en tokens.css, compartida
-   con los modales de Inicio. Acá solo el tema oscuro propio del simulador. */
+/* --- Modales del simulador (editor de procesos e info por cuadrante) ---
+   La estructura (posición, tamaño, scroll) vive en tokens.css. Acá solo el
+   tema: blanco con texto teal oscuro, igual que los modales de Inicio. */
 .simulador .modal-caja {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-lineas);
-  color: var(--color-texto);
+  background: #ffffff;
+  color: var(--paleta-teal-oscuro);
+  border: 1px solid var(--paleta-teal-medio);
   font-size: 15px;
   width: min(720px, 100%);
+}
+
+.simulador .modal-caja h2 {
+  color: var(--paleta-teal-oscuro);
+}
+
+.boton-simular {
+  background: var(--paleta-crema);
+  border: 2px solid var(--paleta-naranja);
+  color: #ffffff;
+}
+
+/* --- Modal de información por algoritmo --- */
+
+.modal-info {
+  width: min(640px, 100%);
+}
+
+.info-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 12px 0 4px;
+}
+
+.info-columnas h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--paleta-naranja);
+}
+
+.info-columnas p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 560px) {
+  .info-columnas {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* --- Editor de procesos (dentro del modal) --- */
@@ -125,6 +193,9 @@
   min-width: 0;
   padding: 4px 6px;
   font-size: 0.9rem;
+  background: #ffffff;
+  border: 1px solid var(--paleta-teal-medio);
+  color: var(--paleta-teal-oscuro);
 }
 
 .editor-procesos-acciones {

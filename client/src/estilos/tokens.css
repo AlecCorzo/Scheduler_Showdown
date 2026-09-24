@@ -231,9 +231,21 @@ label.casilla input {
 }
 
 .boton-secundario-claro {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: 8px;
   background: transparent;
   border: 2px solid var(--paleta-teal-medio);
   color: var(--paleta-teal-oscuro);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boton-secundario-claro:focus-visible {
+  outline: 3px solid var(--paleta-teal-oscuro);
+  outline-offset: 2px;
 }
 
 /* --- Host y Jugar --- */

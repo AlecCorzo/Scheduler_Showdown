@@ -10,6 +10,9 @@ interface Props {
 // Con más de 6 los 4 cuadrantes se aprietan demasiado para caber sin scroll.
 const MAX_PROCESOS = 6;
 
+const PRIORIDAD_MIN = 1;
+const PRIORIDAD_MAX = 10;
+
 function procesoVacio(indice: number): ProcesoConPrioridad {
   return { nombre: `P${indice}`, llegada: 0, rafaga: 1, prioridad: 1 };
 }
@@ -19,6 +22,13 @@ export function EditorProcesos({ procesos, quantum, onCambiarProcesos, onCambiar
     const copia = procesos.map((p) => ({ ...p }));
     if (campo === 'nombre') {
       copia[i]!.nombre = valor;
+    } else if (campo === 'prioridad') {
+      // Se recorta el valor real, no solo el min/max del input: así tipear
+      // "50" a mano no cuela, no solo las flechitas del número.
+      const num = Number(valor);
+      copia[i]!.prioridad = Number.isFinite(num)
+        ? Math.min(PRIORIDAD_MAX, Math.max(PRIORIDAD_MIN, num))
+        : PRIORIDAD_MIN;
     } else {
       copia[i]![campo] = Number(valor);
     }
@@ -72,6 +82,8 @@ export function EditorProcesos({ procesos, quantum, onCambiarProcesos, onCambiar
               <td>
                 <input
                   type="number"
+                  min={PRIORIDAD_MIN}
+                  max={PRIORIDAD_MAX}
                   value={p.prioridad}
                   onChange={(e) => actualizar(i, 'prioridad', e.target.value)}
                 />
@@ -105,8 +117,8 @@ export function EditorProcesos({ procesos, quantum, onCambiarProcesos, onCambiar
         </label>
       </div>
       <p className="aviso">
-        Mayor número de prioridad = se ejecuta primero. Máximo {MAX_PROCESOS} procesos para que los 4 cuadros
-        quepan sin desbordarse. Los nombres deben ser distintos entre sí.
+        Prioridad de {PRIORIDAD_MIN} a {PRIORIDAD_MAX}: mayor número = se ejecuta primero. Máximo {MAX_PROCESOS}{' '}
+        procesos para que los 4 cuadros quepan sin desbordarse. Los nombres deben ser distintos entre sí.
       </p>
     </div>
   );

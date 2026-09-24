@@ -6,6 +6,7 @@ import { EditorProcesos } from './EditorProcesos.js';
 import { Cuadrante } from './Cuadrante.js';
 import { planificarPrioridad } from './algoritmoPrioridad.js';
 import { coloresPorProceso } from './colores.js';
+import { EXPLICACIONES } from './explicaciones.js';
 import type { ProcesoConPrioridad } from './tipos.js';
 import './simulador.css';
 
@@ -65,12 +66,16 @@ export function Simulador() {
     setModalAbierto(false);
   }
 
+  function reiniciarAnimacion() {
+    setClaveAnimacion((c) => c + 1);
+  }
+
   function cerrarModalSiSePuede() {
     if (yaSimulado) setModalAbierto(false);
   }
 
-  // Escape cierra el modal, pero solo si ya hay una simulación corrida
-  // (si no, no hay nada detrás que mostrar y se sentiría roto).
+  // Escape cierra el modal de procesos, pero solo si ya hay una simulación
+  // corrida (si no, no hay nada detrás que mostrar y se sentiría roto).
   useEffect(() => {
     if (!modalAbierto) return;
     function onKeyDown(e: KeyboardEvent) {
@@ -86,35 +91,44 @@ export function Simulador() {
       <header className="simulador-cabecera">
         <h1>Simulador de planificación</h1>
         <div className="simulador-cabecera-acciones">
-          <button type="button" className="boton-secundario" onClick={() => setModalAbierto(true)}>
+          <button type="button" className="boton-secundario-claro" onClick={reiniciarAnimacion}>
+            ↻ Reiniciar animación
+          </button>
+          <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(true)}>
             Editar procesos
           </button>
-          <Link to="/">← Volver al inicio</Link>
+          <Link to="/" className="boton-secundario-claro">
+            Volver al inicio
+          </Link>
         </div>
       </header>
 
       <div className="cuadrantes">
         <Cuadrante
           titulo="FCFS"
-          acento="opcion-1"
+          acento="teal-oscuro"
           segmentos={lineas.FCFS}
           colorPorProceso={colorPorProceso}
           claveAnimacion={claveAnimacion}
+          info={EXPLICACIONES.FCFS}
         />
         <Cuadrante
           titulo="Round Robin"
-          acento="opcion-4"
+          acento="teal-medio"
           segmentos={lineas.RR}
           colorPorProceso={colorPorProceso}
           claveAnimacion={claveAnimacion}
+          info={EXPLICACIONES.RR}
         />
         <Cuadrante
-          // El título cambia entre "SJF" y "SRTF" según lo que se esté mostrando.
+          // El título cambia entre "SJF" y "SRTF" según lo que se esté mostrando,
+          // y la explicación del ícono "i" cambia con él.
           titulo={variante}
-          acento="opcion-2"
+          acento="naranja"
           segmentos={lineas.variante}
           colorPorProceso={colorPorProceso}
           claveAnimacion={claveAnimacion}
+          info={EXPLICACIONES[variante]}
           toggle={{
             etiqueta: variante === 'SJF' ? 'Ver SRTF' : 'Ver SJF',
             onClick: () => setVariante((v) => (v === 'SJF' ? 'SRTF' : 'SJF')),
@@ -122,10 +136,11 @@ export function Simulador() {
         />
         <Cuadrante
           titulo="Prioridad"
-          acento="opcion-3"
+          acento="terracota"
           segmentos={lineas.PRIORIDAD}
           colorPorProceso={colorPorProceso}
           claveAnimacion={claveAnimacion}
+          info={EXPLICACIONES.PRIORIDAD}
         />
       </div>
 
@@ -146,7 +161,7 @@ export function Simulador() {
             />
             <div className="modal-acciones">
               {yaSimulado && (
-                <button type="button" className="boton-secundario" onClick={() => setModalAbierto(false)}>
+                <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(false)}>
                   Cancelar
                 </button>
               )}
