@@ -14,7 +14,7 @@
 .simulador-cabecera {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -23,51 +23,14 @@
   margin: 0;
 }
 
-.editor-procesos {
-  flex-shrink: 0;
-}
-
-.editor-procesos table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.editor-procesos th,
-.editor-procesos td {
-  padding: 3px 8px;
-  text-align: left;
-}
-
-.editor-procesos input {
-  width: 100%;
-  min-width: 0;
-  padding: 3px 6px;
-  font-size: 0.85rem;
-}
-
-.editor-procesos-acciones {
+.simulador-cabecera-acciones {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin: 6px 0;
 }
 
-.quantum-editor {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  margin: 0;
-}
-
-.quantum-editor input {
-  width: 4ch;
-}
-
-.boton-simular {
-  align-self: flex-start;
-  background: var(--color-opcion-4);
-  flex-shrink: 0;
+.boton-secundario {
+  background: var(--color-lineas);
 }
 
 .cuadrantes {
@@ -113,22 +76,9 @@
   flex-shrink: 0;
 }
 
-.cuadrante-titulo {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
 .cuadrante-cabecera h2 {
   font-size: 1.05rem;
   margin: 0;
-}
-
-.cuadrante-subtitulo {
-  font-size: 0.75rem;
-  color: var(--color-texto-secundario);
-  white-space: nowrap;
 }
 
 .boton-alterna {
@@ -144,4 +94,54 @@
   overflow-y: hidden;
   display: flex;
   align-items: center;
+}
+
+/* --- Modal de procesos ---
+   La estructura (posición, tamaño, scroll) vive en tokens.css, compartida
+   con los modales de Inicio. Acá solo el tema oscuro propio del simulador. */
+.simulador .modal-caja {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-lineas);
+  color: var(--color-texto);
+  font-size: 15px;
+  width: min(720px, 100%);
+}
+
+/* --- Editor de procesos (dentro del modal) --- */
+
+.editor-procesos table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.editor-procesos th,
+.editor-procesos td {
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.editor-procesos input {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+}
+
+.editor-procesos-acciones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0;
+}
+
+.quantum-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.quantum-editor input {
+  width: 4ch;
 }

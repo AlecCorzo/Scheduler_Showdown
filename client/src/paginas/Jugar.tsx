@@ -19,6 +19,14 @@ export function Jugar() {
     if (!sessionStorage.getItem('codigo') || !sessionStorage.getItem('token')) navigate('/');
   }, [navigate]);
 
+  function volverAlInicio() {
+    sessionStorage.removeItem('codigo');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('nombre');
+    useStore.setState({ estado: null });
+    navigate('/');
+  }
+
   function responder(opcion: number) {
     if (!estado || estado.fase !== 'RONDA' || !estado.ronda || enviando || estado.miRespuesta !== null) return;
     setEnviando(true);
@@ -95,6 +103,9 @@ export function Jugar() {
           <p>Puntaje final: {estado.yo.puntos}</p>
           <p className="aviso">Posición: {estado.yo.posicion}</p>
           {estado.resumen && <Resumen filas={estado.resumen} />}
+          <button type="button" onClick={volverAlInicio}>
+            Volver al inicio
+          </button>
         </section>
       )}
     </main>

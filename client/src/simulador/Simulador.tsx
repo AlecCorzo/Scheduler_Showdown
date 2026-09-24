@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { planificar } from '@showdown/engine';
 import type { Escenario } from '@showdown/engine';
@@ -23,6 +23,13 @@ export function Simulador() {
   const [quantum, setQuantum] = useState(2);
   const [variante, setVariante] = useState<'SJF' | 'SRTF'>('SJF');
   const [claveAnimacion, setClaveAnimacion] = useState(0);
+
+  // El modal empieza abierto: lo primero que se ve es el formulario, no los
+  // cuadrantes. yaSimulado controla si ya hay algo válido detrás del modal
+  // (para permitir cerrarlo con Escape/backdrop) — en la primera carga no,
+  // porque detrás no hay nada que valga la pena ver todavía.
+  const [modalAbierto, setModalAbierto] = useState(true);
+  const [yaSimulado, setYaSimulado] = useState(false);
 
   // Ordenados por llegada una sola vez: es el orden que espera el motor
   // (ver el comentario en engine/src/tipos.ts sobre Escenario.procesos) y
@@ -54,25 +61,37 @@ export function Simulador() {
 
   function simular() {
     setClaveAnimacion((c) => c + 1);
+    setYaSimulado(true);
+    setModalAbierto(false);
   }
+
+  function cerrarModalSiSePuede() {
+    if (yaSimulado) setModalAbierto(false);
+  }
+
+  // Escape cierra el modal, pero solo si ya hay una simulación corrida
+  // (si no, no hay nada detrás que mostrar y se sentiría roto).
+  useEffect(() => {
+    if (!modalAbierto) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') cerrarModalSiSePuede();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalAbierto, yaSimulado]);
 
   return (
     <main className="simulador">
       <header className="simulador-cabecera">
         <h1>Simulador de planificación</h1>
-        <Link to="/">← Volver al inicio</Link>
+        <div className="simulador-cabecera-acciones">
+          <button type="button" className="boton-secundario" onClick={() => setModalAbierto(true)}>
+            Editar procesos
+          </button>
+          <Link to="/">← Volver al inicio</Link>
+        </div>
       </header>
-
-      <EditorProcesos
-        procesos={procesos}
-        quantum={quantum}
-        onCambiarProcesos={setProcesos}
-        onCambiarQuantum={setQuantum}
-      />
-
-      <button type="button" className="boton-simular" onClick={simular}>
-        ▶ Simular
-      </button>
 
       <div className="cuadrantes">
         <Cuadrante
@@ -90,8 +109,8 @@ export function Simulador() {
           claveAnimacion={claveAnimacion}
         />
         <Cuadrante
-          titulo="SJF"
-          subtitulo={variante === 'SRTF' ? 'mostrando SRTF' : undefined}
+          // El título cambia entre "SJF" y "SRTF" según lo que se esté mostrando.
+          titulo={variante}
           acento="opcion-2"
           segmentos={lineas.variante}
           colorPorProceso={colorPorProceso}
@@ -109,6 +128,35 @@ export function Simulador() {
           claveAnimacion={claveAnimacion}
         />
       </div>
+
+      {modalAbierto && (
+        <div
+          className="modal-fondo"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cerrarModalSiSePuede();
+          }}
+        >
+          <div className="modal-caja" role="dialog" aria-modal="true" aria-label="Procesos del simulador">
+            <h2>Procesos</h2>
+            <EditorProcesos
+              procesos={procesos}
+              quantum={quantum}
+              onCambiarProcesos={setProcesos}
+              onCambiarQuantum={setQuantum}
+            />
+            <div className="modal-acciones">
+              {yaSimulado && (
+                <button type="button" className="boton-secundario" onClick={() => setModalAbierto(false)}>
+                  Cancelar
+                </button>
+              )}
+              <button type="button" className="boton-simular" onClick={simular}>
+                Simular
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

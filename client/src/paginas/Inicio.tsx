@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { socket } from '../socket.js';
 import type { Ack } from '../tipos.js';
+import iconoPersona from '../assets/person-em.png';
+import iconoLapiz from '../assets/pencil-em.png';
+import iconoComputador from '../assets/pc-em.png';
 
 const TEXTO_ERROR: Record<string, string> = {
   SALA_NO_EXISTE: 'No hay ninguna sala con ese código. Revísalo en la pantalla del proyector.',
@@ -17,6 +20,9 @@ function fueraDeRango(valor: number, min: number, max: number): boolean {
 export function Inicio() {
   const navigate = useNavigate();
 
+  // Cuál de los dos modales está abierto, o ninguno.
+  const [modalActivo, setModalActivo] = useState<'crear' | 'unirme' | null>(null);
+
   const [rondas, setRondas] = useState(10);
   const [tiempoA, setTiempoA] = useState(30);
   const [tiempoB, setTiempoB] = useState(60);
@@ -29,6 +35,18 @@ export function Inicio() {
   const [nombre, setNombre] = useState('');
   const [errorUnirse, setErrorUnirse] = useState<string | null>(null);
   const [uniendo, setUniendo] = useState(false);
+
+  // Escape y click afuera cierran cualquiera de los dos modales: acá, a
+  // diferencia del simulador, siempre hay algo válido detrás (las 3
+  // tarjetas), así que no hace falta restringirlo.
+  useEffect(() => {
+    if (!modalActivo) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setModalActivo(null);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalActivo]);
 
   function errorDeConfiguracion(): string | null {
     if (fueraDeRango(rondas, 4, 20)) return 'Las rondas deben ser un número entero entre 4 y 20.';
@@ -78,79 +96,125 @@ export function Inicio() {
 
   return (
     <main className="inicio">
-      <h1>Scheduler Showdown</h1>
-      <p className="aviso">
-        <Link to="/simulador">Abrir el simulador de algoritmos →</Link>
-      </p>
+      <div className="inicio-contenido">
+        <h1>Scheduler Showdown</h1>
 
-      <section className="tarjeta">
-        <h2>Crear sala</h2>
-        <label>
-          Rondas (4 a 20)
-          <input
-            type="number"
-            min={4}
-            max={20}
-            value={rondas}
-            onChange={(e) => setRondas(Number(e.target.value))}
-          />
-        </label>
-        <label>
-          Tiempo por ronda de modo A, en segundos (15 a 90)
-          <input
-            type="number"
-            min={15}
-            max={90}
-            value={tiempoA}
-            onChange={(e) => setTiempoA(Number(e.target.value))}
-          />
-        </label>
-        <label>
-          Tiempo por ronda de modo B, en segundos (15 a 90)
-          <input
-            type="number"
-            min={15}
-            max={90}
-            value={tiempoB}
-            onChange={(e) => setTiempoB(Number(e.target.value))}
-          />
-        </label>
-        <label>
-          Dificultad
-          <select value={dificultad} onChange={(e) => setDificultad(e.target.value as 'normal' | 'facil')}>
-            <option value="normal">Normal</option>
-            <option value="facil">Fácil</option>
-          </select>
-        </label>
-        <label className="casilla">
-          <input
-            type="checkbox"
-            checked={revelarAutomatico}
-            onChange={(e) => setRevelarAutomatico(e.target.checked)}
-          />
-          Revelar automáticamente al cerrarse cada ronda
-        </label>
-        {errorCrear && <p className="error">{errorCrear}</p>}
-        <button type="button" onClick={crearSala} disabled={creando || Boolean(errorConfiguracion)}>
-          Crear sala
-        </button>
-      </section>
+        <div className="tarjetas-horizontal">
+          <section className="tarjeta">
+            <img className="tarjeta-icono" src={iconoPersona} alt="" />
+            <h2>Simulador</h2>
+            <p>Compara FCFS, Round Robin, SJF/SRTF y Prioridad en paralelo.</p>
+            <Link to="/simulador" className="boton-enlace">
+              Abrir simulador
+            </Link>
+          </section>
 
-      <section className="tarjeta">
-        <h2>Unirme</h2>
-        <label>
-          Código
-          <input value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={5} />
-        </label>
-        <label>
-          Nombre
-          <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={16} />
-        </label>
-        {errorUnirse && <p className="error">{errorUnirse}</p>}
-        <button type="button" onClick={unirse} disabled={uniendo || !codigo || !nombre}>
-          Unirme
-        </button>
-      </section>
+          <section className="tarjeta">
+            <img className="tarjeta-icono" src={iconoLapiz} alt="" />
+            <h2>Crear sala</h2>
+            <p>Crea una sala para hostear una batalla de trivia sobre algoritmos.</p>
+            <button type="button" className="boton-tarjeta" onClick={() => setModalActivo('crear')}>
+              Crear sala
+            </button>
+          </section>
+
+          <section className="tarjeta">
+            <img className="tarjeta-icono" src={iconoComputador} alt="" />
+            <h2>Unirme</h2>
+            <p>Únete a una sala para poner a prueba tus conocimientos.</p>
+            <button type="button" className="boton-tarjeta" onClick={() => setModalActivo('unirme')}>
+              Unirme
+            </button>
+          </section>
+        </div>
+      </div>
+
+      {modalActivo === 'crear' && (
+        <div className="modal-fondo" onClick={(e) => e.target === e.currentTarget && setModalActivo(null)}>
+          <div className="modal-caja" role="dialog" aria-modal="true" aria-label="Crear sala">
+            <h2>Crear sala</h2>
+            <label>
+              Rondas (4 a 20)
+              <input
+                type="number"
+                min={4}
+                max={20}
+                value={rondas}
+                onChange={(e) => setRondas(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Tiempo por ronda de modo A, en segundos (15 a 90)
+              <input
+                type="number"
+                min={15}
+                max={90}
+                value={tiempoA}
+                onChange={(e) => setTiempoA(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Tiempo por ronda de modo B, en segundos (15 a 90)
+              <input
+                type="number"
+                min={15}
+                max={90}
+                value={tiempoB}
+                onChange={(e) => setTiempoB(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Dificultad
+              <select value={dificultad} onChange={(e) => setDificultad(e.target.value as 'normal' | 'facil')}>
+                <option value="normal">Normal</option>
+                <option value="facil">Fácil</option>
+              </select>
+            </label>
+            <label className="casilla">
+              <input
+                type="checkbox"
+                checked={revelarAutomatico}
+                onChange={(e) => setRevelarAutomatico(e.target.checked)}
+              />
+              Revelar automáticamente al cerrarse cada ronda
+            </label>
+            {errorCrear && <p className="error">{errorCrear}</p>}
+            <div className="modal-acciones">
+              <button type="button" className="boton-secundario-claro" onClick={() => setModalActivo(null)}>
+                Cancelar
+              </button>
+              <button type="button" onClick={crearSala} disabled={creando || Boolean(errorConfiguracion)}>
+                Crear sala
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalActivo === 'unirme' && (
+        <div className="modal-fondo" onClick={(e) => e.target === e.currentTarget && setModalActivo(null)}>
+          <div className="modal-caja" role="dialog" aria-modal="true" aria-label="Unirme a sala">
+            <h2>Unirme</h2>
+            <label>
+              Código
+              <input value={codigo} onChange={(e) => setCodigo(e.target.value)} maxLength={5} />
+            </label>
+            <label>
+              Nombre
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={16} />
+            </label>
+            {errorUnirse && <p className="error">{errorUnirse}</p>}
+            <div className="modal-acciones">
+              <button type="button" className="boton-secundario-claro" onClick={() => setModalActivo(null)}>
+                Cancelar
+              </button>
+              <button type="button" onClick={unirse} disabled={uniendo || !codigo || !nombre}>
+                Unirme
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

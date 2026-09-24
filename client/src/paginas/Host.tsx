@@ -65,6 +65,13 @@ export function Host() {
   const direccion = window.location.origin;
   const esLocalhost = window.location.hostname === 'localhost';
 
+  function volverAlInicio() {
+    sessionStorage.removeItem('codigo');
+    sessionStorage.removeItem('tokenHost');
+    useStore.setState({ estado: null });
+    navigate('/');
+  }
+
   function descargarCsv() {
     socket.emit('host:exportar', {}, (ack: Ack<{ csv: string }>) => {
       if (!ack.ok) return;
@@ -209,6 +216,9 @@ export function Host() {
           )}
           <button type="button" onClick={descargarCsv}>
             Descargar resultados
+          </button>
+          <button type="button" onClick={volverAlInicio}>
+            Volver al inicio
           </button>
         </section>
       )}

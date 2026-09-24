@@ -8,8 +8,6 @@ interface Toggle {
 
 interface Props {
   titulo: string;
-  /** Texto chico junto al título, ej. "mostrando SRTF". No cambia el título del cuadrante. */
-  subtitulo?: string;
   acento: 'opcion-1' | 'opcion-2' | 'opcion-3' | 'opcion-4';
   segmentos: Segmento[];
   colorPorProceso: Record<string, string>;
@@ -17,22 +15,11 @@ interface Props {
   toggle?: Toggle;
 }
 
-export function Cuadrante({
-  titulo,
-  subtitulo,
-  acento,
-  segmentos,
-  colorPorProceso,
-  claveAnimacion,
-  toggle,
-}: Props) {
+export function Cuadrante({ titulo, acento, segmentos, colorPorProceso, claveAnimacion, toggle }: Props) {
   return (
     <div className={`cuadrante ${acento}`}>
       <div className="cuadrante-cabecera">
-        <span className="cuadrante-titulo">
-          <h2>{titulo}</h2>
-          {subtitulo && <span className="cuadrante-subtitulo">{subtitulo}</span>}
-        </span>
+        <h2>{titulo}</h2>
         {toggle && (
           <button type="button" className="boton-alterna" onClick={toggle.onClick}>
             {toggle.etiqueta}

@@ -8,6 +8,14 @@
   --color-opcion-2: #2f7fe0;
   --color-opcion-3: #f2b705;
   --color-opcion-4: #1e9e7a;
+
+  /* Paleta clara de Inicio (ver captura de referencia) */
+  --paleta-crema: #dcaa89;
+  --paleta-teal-oscuro: #30525c;
+  --paleta-naranja: #c35627;
+  --paleta-terracota: #d6794d;
+  --paleta-teal-medio: #4c848d;
+  --paleta-gris-claro: #ececec;
 }
 
 * {
@@ -64,22 +72,6 @@ select:focus-visible {
   color: var(--color-opcion-3);
 }
 
-/* --- Inicio --- */
-
-.inicio {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 32px 16px;
-}
-
-.tarjeta {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-lineas);
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
-}
-
 label {
   display: block;
   margin-bottom: 12px;
@@ -109,6 +101,139 @@ label.casilla input {
   display: inline;
   width: auto;
   margin-top: 0;
+}
+
+/* --- Inicio --- */
+
+.inicio {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--paleta-gris-claro);
+  color: var(--paleta-teal-oscuro);
+  padding: 48px 16px;
+}
+
+.inicio-contenido {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.inicio h1 {
+  text-align: center;
+  font-size: 2.6rem;
+  margin: 0 0 40px;
+}
+
+.tarjetas-horizontal {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+@media (max-width: 800px) {
+  .tarjetas-horizontal {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tarjeta {
+  background: var(--paleta-teal-medio);
+  color: var(--color-texto);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.tarjeta-icono {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.tarjeta h2 {
+  margin: 0 0 12px;
+}
+
+.tarjeta p {
+  margin: 0 0 24px;
+  color: var(--color-texto);
+}
+
+.boton-tarjeta,
+.boton-enlace {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 12px 28px;
+  border-radius: 8px;
+  background: var(--paleta-crema);
+  border: 2px solid var(--paleta-naranja);
+  color: var(--color-texto);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boton-tarjeta:focus-visible,
+.boton-enlace:focus-visible {
+  outline: 3px solid var(--paleta-teal-oscuro);
+  outline-offset: 2px;
+}
+
+/* Modal de Crear sala / Unirme: tema claro, blanco sobre la paleta de Inicio. */
+.inicio .modal-caja {
+  background: #ffffff;
+  color: var(--paleta-teal-oscuro);
+  border: 1px solid var(--paleta-teal-medio);
+}
+
+.inicio .modal-caja h2 {
+  color: var(--paleta-teal-oscuro);
+}
+
+.inicio .modal-caja label {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--paleta-teal-oscuro);
+}
+
+.inicio .modal-caja input,
+.inicio .modal-caja select {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid var(--paleta-teal-medio);
+  color: var(--paleta-teal-oscuro);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.inicio .modal-caja label.casilla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.inicio .modal-caja label.casilla input {
+  display: inline;
+  width: auto;
+  margin-top: 0;
+}
+
+.inicio .modal-caja button[type='button']:not(.boton-secundario-claro) {
+  background: var(--paleta-crema);
+  border: 2px solid var(--paleta-naranja);
+  color: var(--color-texto);
+}
+
+.boton-secundario-claro {
+  background: transparent;
+  border: 2px solid var(--paleta-teal-medio);
+  color: var(--paleta-teal-oscuro);
 }
 
 /* --- Host y Jugar --- */
@@ -345,4 +470,39 @@ header {
     opacity: 1;
     transform: scaleX(1);
   }
+}
+
+/* --- Modal genérico ---
+   Solo estructura (posición, tamaño, scroll). El color de fondo y el texto
+   los define cada página que lo usa (ver ".inicio .modal-caja" y
+   ".simulador .modal-caja"), porque Inicio usa la paleta clara y el resto
+   de la app usa el tema oscuro. */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 30, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+}
+
+.modal-caja {
+  border-radius: 12px;
+  padding: 24px 28px;
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-caja h2 {
+  margin-top: 0;
+}
+
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
 }
