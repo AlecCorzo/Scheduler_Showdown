@@ -484,6 +484,39 @@ header {
   }
 }
 
+/* Simulador: segmento que se está rellenando ahora mismo (tiempoActual cae
+   dentro de él) y el cursor de tiempo que recorre cada cuadrante. Sin
+   animación con "reduced motion": el segmento activo queda con su borde
+   fijo y el cursor sólido, sin parpadeo, en vez de ocultarlos. */
+@media (prefers-reduced-motion: no-preference) {
+  .gantt-segmento-activo {
+    animation: gantt-pulso 900ms ease-in-out infinite;
+  }
+  .gantt-cursor {
+    animation: gantt-cursor-parpadeo 900ms ease-in-out infinite;
+  }
+}
+
+@keyframes gantt-pulso {
+  0%,
+  100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.35;
+  }
+}
+
+@keyframes gantt-cursor-parpadeo {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
 /* --- Modal genérico ---
    Solo estructura (posición, tamaño, scroll). El color de fondo y el texto
    los define cada página que lo usa (ver ".inicio .modal-caja" y

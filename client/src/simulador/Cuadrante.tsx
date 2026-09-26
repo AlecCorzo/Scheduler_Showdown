@@ -8,17 +8,32 @@ interface Toggle {
   onClick: () => void;
 }
 
+interface ProcesoLlegada {
+  nombre: string;
+  llegada: number;
+}
+
 interface Props {
   titulo: string;
   acento: 'teal-oscuro' | 'teal-medio' | 'naranja' | 'terracota';
   segmentos: Segmento[];
   colorPorProceso: Record<string, string>;
-  claveAnimacion: number;
+  tiempoActual: number;
+  procesos: ProcesoLlegada[];
   info: InfoAlgoritmo;
   toggle?: Toggle;
 }
 
-export function Cuadrante({ titulo, acento, segmentos, colorPorProceso, claveAnimacion, info, toggle }: Props) {
+export function Cuadrante({
+  titulo,
+  acento,
+  segmentos,
+  colorPorProceso,
+  tiempoActual,
+  procesos,
+  info,
+  toggle,
+}: Props) {
   const [infoAbierta, setInfoAbierta] = useState(false);
 
   useEffect(() => {
@@ -51,11 +66,12 @@ export function Cuadrante({ titulo, acento, segmentos, colorPorProceso, claveAni
         </div>
       </div>
       <div className="cuadrante-gantt">
-        {/* key={claveAnimacion} fuerza a React a recrear el SVG al pulsar "Simular"
-            o "Reiniciar animación", así se repite la animación de aparición
-            segmento a segmento que ya existe en Gantt.tsx (gantt-aparecer),
-            en vez de una animación fluida. */}
-        <Gantt key={claveAnimacion} segmentos={segmentos} colorPorProceso={colorPorProceso} />
+        <Gantt
+          segmentos={segmentos}
+          colorPorProceso={colorPorProceso}
+          tiempoActual={tiempoActual}
+          procesos={procesos}
+        />
       </div>
 
       {infoAbierta && (

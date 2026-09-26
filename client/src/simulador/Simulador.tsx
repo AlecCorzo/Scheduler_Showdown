@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { planificar } from '@showdown/engine';
 import type { Escenario } from '@showdown/engine';
@@ -19,11 +19,23 @@ const PROCESOS_INICIALES: ProcesoConPrioridad[] = [
   { nombre: 'Dani', llegada: 5, rafaga: 4, prioridad: 3 },
 ];
 
+// La animación siempre dura entre estos dos extremos, sin importar qué tan
+// larga sea la simulación en minutos — así una mesa con muchos procesos no
+// tarda una eternidad en reproducirse, y una muy corta no pasa en un parpadeo.
+const DURACION_ANIM_MIN_MS = 1200;
+const DURACION_ANIM_MAX_MS = 6000;
+const MS_POR_MINUTO_SIMULADO = 450;
+
 export function Simulador() {
   const [procesos, setProcesos] = useState<ProcesoConPrioridad[]>(PROCESOS_INICIALES);
   const [quantum, setQuantum] = useState(2);
   const [variante, setVariante] = useState<'SJF' | 'SRTF'>('SJF');
-  const [claveAnimacion, setClaveAnimacion] = useState(0);
+
+  // Reloj compartido por los 4 cuadrantes: es lo que hace que la animación
+  // se pueda comparar en vivo (a qué algoritmo le toma menos "minutos
+  // simulados" terminar), en vez de cada uno animando por su cuenta.
+  const [tiempoActual, setTiempoActual] = useState(0);
+  const animacionRef = useRef<number | null>(null);
 
   // El modal empieza abierto: lo primero que se ve es el formulario, no los
   // cuadrantes. yaSimulado controla si ya hay algo válido detrás del modal
@@ -60,14 +72,57 @@ export function Simulador() {
     [escenario, variante, procesosOrdenados],
   );
 
-  function simular() {
-    setClaveAnimacion((c) => c + 1);
-    setYaSimulado(true);
-    setModalAbierto(false);
+  // El más largo de los 4 marca cuánto dura la animación completa: los
+  // algoritmos más cortos simplemente dejan de avanzar antes que el reloj
+  // llegue al final, lo cual de paso muestra a simple vista cuál terminó primero.
+  const duracionMax = useMemo(() => {
+    const fines = [
+      ...lineas.FCFS.map((s) => s.fin),
+      ...lineas.variante.map((s) => s.fin),
+      ...lineas.RR.map((s) => s.fin),
+      ...lineas.PRIORIDAD.map((s) => s.fin),
+    ];
+    return Math.max(1, ...fines);
+  }, [lineas]);
+
+  function iniciarAnimacion() {
+    if (animacionRef.current !== null) cancelAnimationFrame(animacionRef.current);
+
+    const prefiereMenosMovimiento =
+      typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefiereMenosMovimiento) {
+      // Sin animar: se muestra el resultado completo de una vez.
+      setTiempoActual(duracionMax);
+      return;
+    }
+
+    const duracionMs = Math.min(
+      DURACION_ANIM_MAX_MS,
+      Math.max(DURACION_ANIM_MIN_MS, duracionMax * MS_POR_MINUTO_SIMULADO),
+    );
+    const inicio = performance.now();
+    setTiempoActual(0);
+
+    function tick(ahora: number) {
+      const progreso = Math.min(1, (ahora - inicio) / duracionMs);
+      setTiempoActual(progreso * duracionMax);
+      animacionRef.current = progreso < 1 ? requestAnimationFrame(tick) : null;
+    }
+
+    animacionRef.current = requestAnimationFrame(tick);
   }
 
-  function reiniciarAnimacion() {
-    setClaveAnimacion((c) => c + 1);
+  // Cancela la animación en curso si el componente se desmonta a mitad de camino.
+  useEffect(() => {
+    return () => {
+      if (animacionRef.current !== null) cancelAnimationFrame(animacionRef.current);
+    };
+  }, []);
+
+  function simular() {
+    setYaSimulado(true);
+    setModalAbierto(false);
+    iniciarAnimacion();
   }
 
   function cerrarModalSiSePuede() {
@@ -91,7 +146,7 @@ export function Simulador() {
       <header className="simulador-cabecera">
         <h1>Simulador de planificación</h1>
         <div className="simulador-cabecera-acciones">
-          <button type="button" className="boton-secundario-claro" onClick={reiniciarAnimacion}>
+          <button type="button" className="boton-secundario-claro" onClick={iniciarAnimacion}>
             ↻ Reiniciar animación
           </button>
           <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(true)}>
@@ -109,7 +164,8 @@ export function Simulador() {
           acento="teal-oscuro"
           segmentos={lineas.FCFS}
           colorPorProceso={colorPorProceso}
-          claveAnimacion={claveAnimacion}
+          tiempoActual={tiempoActual}
+          procesos={procesosOrdenados}
           info={EXPLICACIONES.FCFS}
         />
         <Cuadrante
@@ -117,7 +173,8 @@ export function Simulador() {
           acento="teal-medio"
           segmentos={lineas.RR}
           colorPorProceso={colorPorProceso}
-          claveAnimacion={claveAnimacion}
+          tiempoActual={tiempoActual}
+          procesos={procesosOrdenados}
           info={EXPLICACIONES.RR}
         />
         <Cuadrante
@@ -127,7 +184,8 @@ export function Simulador() {
           acento="naranja"
           segmentos={lineas.variante}
           colorPorProceso={colorPorProceso}
-          claveAnimacion={claveAnimacion}
+          tiempoActual={tiempoActual}
+          procesos={procesosOrdenados}
           info={EXPLICACIONES[variante]}
           toggle={{
             etiqueta: variante === 'SJF' ? 'Ver SRTF' : 'Ver SJF',
@@ -139,7 +197,8 @@ export function Simulador() {
           acento="terracota"
           segmentos={lineas.PRIORIDAD}
           colorPorProceso={colorPorProceso}
-          claveAnimacion={claveAnimacion}
+          tiempoActual={tiempoActual}
+          procesos={procesosOrdenados}
           info={EXPLICACIONES.PRIORIDAD}
         />
       </div>
