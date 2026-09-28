@@ -25,29 +25,14 @@ interface Props {
   info: InfoAlgoritmo;
   toggle?: Toggle;
   duracionMax: number;
+  esperaPromedio?: number;
+  esMasEficiente?: boolean;
 }
 
-/** Calcula el tiempo promedio de espera a partir de los segmentos. */
-function calcularStats(segmentos: Segmento[], procesos: ProcesoLlegada[]) {
-  // Tiempo de finalización: el fin del último segmento de cada proceso
-  const finPorProceso = new Map<string, number>();
-  for (const s of segmentos) {
-    const actual = finPorProceso.get(s.proceso) ?? 0;
-    if (s.fin > actual) finPorProceso.set(s.proceso, s.fin);
-  }
-
-  // Tiempo de retorno (turnaround): fin - llegada
-  const retornos: number[] = [];
-  for (const p of procesos) {
-    const fin = finPorProceso.get(p.nombre);
-    if (fin !== undefined) retornos.push(fin - p.llegada);
-  }
-
+/** Calcula el tiempo de finalización (makespan) a partir de los segmentos. */
+function calcularStats(segmentos: Segmento[]) {
   const makespanTotal = Math.max(...segmentos.map((s) => s.fin), 0);
-  const avgRetorno =
-    retornos.length > 0 ? retornos.reduce((a, b) => a + b, 0) / retornos.length : 0;
-
-  return { makespan: makespanTotal, avgRetorno };
+  return { makespan: makespanTotal };
 }
 
 export function Cuadrante({
@@ -61,10 +46,20 @@ export function Cuadrante({
   info,
   toggle,
   duracionMax,
+  esperaPromedio,
+  esMasEficiente,
 }: Props) {
   const [infoAbierta, setInfoAbierta] = useState(false);
 
-  const stats = useMemo(() => calcularStats(segmentos, procesos), [segmentos, procesos]);
+  const stats = useMemo(() => calcularStats(segmentos), [segmentos]);
+
+  // Proceso que está usando la CPU en el minuto actual (entero)
+  const procesoActual = useMemo(() => {
+    const m = Math.floor(tiempoActual);
+    if (m >= stats.makespan && stats.makespan > 0) return 'FIN';
+    const seg = segmentos.find((s) => s.inicio <= m && m < s.fin);
+    return seg ? seg.proceso : null;
+  }, [segmentos, tiempoActual, stats.makespan]);
 
   // Progreso relativo (0..1) de este cuadrante vs el máximo global
   const progreso = duracionMax > 0 ? Math.min(tiempoActual / duracionMax, 1) : 0;
@@ -113,7 +108,7 @@ export function Cuadrante({
         </div>
       </div>
 
-      {/* Estadísticas: makespan y tiempo promedio de retorno */}
+      {/* Estadísticas: tiempo de finalización, espera promedio y proceso en CPU en el minuto actual */}
       <div className="cuadrante-stats">
         <span className="cuadrante-stat">
           Termina en{' '}
@@ -121,12 +116,39 @@ export function Cuadrante({
             {tiempoActual >= stats.makespan ? stats.makespan : '…'}
           </span>
         </span>
-        <span className="cuadrante-stat">
-          T̄ retorno{' '}
-          <span className="cuadrante-stat-valor">
-            {tiempoActual >= stats.makespan ? stats.avgRetorno.toFixed(1) : '…'}
+        {esperaPromedio !== undefined && (
+          <span className="cuadrante-stat">
+            Espera prom.{' '}
+            <span className="cuadrante-stat-valor">
+              {esperaPromedio.toFixed(1)}m
+            </span>
           </span>
+        )}
+        <span className="cuadrante-stat">
+          {procesoActual === 'FIN' ? (
+            <span className="cuadrante-cpu-badge cpu-fin">✓ Completado</span>
+          ) : procesoActual ? (
+            <span
+              className="cuadrante-cpu-badge"
+              style={{
+                backgroundColor: colorPorProceso[procesoActual]
+                  ? `${colorPorProceso[procesoActual]}33`
+                  : 'rgba(255,255,255,0.15)',
+                borderColor: colorPorProceso[procesoActual] ?? 'rgba(255,255,255,0.4)',
+                color: colorPorProceso[procesoActual] ?? '#ffffff',
+              }}
+            >
+              En CPU: <strong>{procesoActual}</strong>
+            </span>
+          ) : (
+            <span className="cuadrante-cpu-badge cpu-ociosa">CPU Ociosa</span>
+          )}
         </span>
+        {esMasEficiente && (
+          <span className="cuadrante-badge-eficiente" title="Algoritmo con menor tiempo de espera promedio">
+            🏆 Más eficiente
+          </span>
+        )}
         {terminado && esMasCorto && (
           <span className="cuadrante-badge-rapido">✓ más rápido</span>
         )}

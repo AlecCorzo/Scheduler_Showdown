@@ -26,6 +26,28 @@ const DURACION_ANIM_MIN_MS = 1200;
 const DURACION_ANIM_MAX_MS = 6000;
 const MS_POR_MINUTO_SIMULADO = 450;
 
+/** Calcula el tiempo promedio de espera de un algoritmo (métrica estándar de eficiencia). */
+function calcularEsperaPromedio(
+  segmentos: { proceso: string; fin: number }[],
+  procesos: { nombre: string; llegada: number; rafaga: number }[],
+): number {
+  if (procesos.length === 0) return 0;
+  const finPorProceso = new Map<string, number>();
+  for (const s of segmentos) {
+    const act = finPorProceso.get(s.proceso) ?? 0;
+    if (s.fin > act) finPorProceso.set(s.proceso, s.fin);
+  }
+
+  let sumaEspera = 0;
+  for (const p of procesos) {
+    const fin = finPorProceso.get(p.nombre) ?? p.llegada;
+    const espera = Math.max(0, fin - p.llegada - p.rafaga);
+    sumaEspera += espera;
+  }
+
+  return sumaEspera / procesos.length;
+}
+
 export function Simulador() {
   const [procesos, setProcesos] = useState<ProcesoConPrioridad[]>(PROCESOS_INICIALES);
   const [quantum, setQuantum] = useState(2);
@@ -35,6 +57,7 @@ export function Simulador() {
   // se pueda comparar en vivo (a qué algoritmo le toma menos "minutos
   // simulados" terminar), en vez de cada uno animando por su cuenta.
   const [tiempoActual, setTiempoActual] = useState(0);
+  const [reproduciendo, setReproduciendo] = useState(false);
   const animacionRef = useRef<number | null>(null);
 
   // El modal empieza abierto: lo primero que se ve es el formulario, no los
@@ -108,31 +131,110 @@ export function Simulador() {
     return Math.max(1, ...fines);
   }, [lineas]);
 
-  function iniciarAnimacion() {
-    if (animacionRef.current !== null) cancelAnimationFrame(animacionRef.current);
+  const esperas = useMemo(() => {
+    return {
+      FCFS: calcularEsperaPromedio(lineas.FCFS, procesosOrdenados),
+      variante: calcularEsperaPromedio(lineas.variante, procesosOrdenados),
+      RR: calcularEsperaPromedio(lineas.RR, procesosOrdenados),
+      PRIORIDAD: calcularEsperaPromedio(lineas.PRIORIDAD, procesosOrdenados),
+    };
+  }, [lineas, procesosOrdenados]);
+
+  const masEficiente = useMemo(() => {
+    const lista = [
+      { id: 'FCFS', nombre: 'FCFS', espera: esperas.FCFS },
+      { id: 'variante', nombre: variante, espera: esperas.variante },
+      { id: 'RR', nombre: 'Round Robin', espera: esperas.RR },
+      { id: 'PRIORIDAD', nombre: 'Prioridad', espera: esperas.PRIORIDAD },
+    ];
+
+    const minEspera = Math.min(...lista.map((x) => x.espera));
+    const ganadores = lista.filter((x) => Math.abs(x.espera - minEspera) < 0.001);
+
+    return {
+      nombres: ganadores.map((g) => g.nombre).join(' y '),
+      ids: new Set(ganadores.map((g) => g.id)),
+      minEspera,
+    };
+  }, [esperas, variante]);
+
+  function pausarAnimacion() {
+    if (animacionRef.current !== null) {
+      cancelAnimationFrame(animacionRef.current);
+      animacionRef.current = null;
+    }
+    setReproduciendo(false);
+  }
+
+  function reproducirAnimacion(desde?: number) {
+    if (animacionRef.current !== null) {
+      cancelAnimationFrame(animacionRef.current);
+      animacionRef.current = null;
+    }
 
     const prefiereMenosMovimiento =
       typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefiereMenosMovimiento) {
-      // Sin animar: se muestra el resultado completo de una vez.
       setTiempoActual(duracionMax);
+      setReproduciendo(false);
       return;
     }
 
-    const duracionMs = Math.min(
+    const tInicio = desde !== undefined ? desde : tiempoActual >= duracionMax ? 0 : tiempoActual;
+    setTiempoActual(tInicio);
+    setReproduciendo(true);
+
+    const duracionMsTotal = Math.min(
       DURACION_ANIM_MAX_MS,
       Math.max(DURACION_ANIM_MIN_MS, duracionMax * MS_POR_MINUTO_SIMULADO),
     );
+    const proporcionRestante = duracionMax > 0 ? (duracionMax - tInicio) / duracionMax : 1;
+    const duracionMs = Math.max(200, duracionMsTotal * proporcionRestante);
     const inicio = performance.now();
-    setTiempoActual(0);
 
     function tick(ahora: number) {
       const progreso = Math.min(1, (ahora - inicio) / duracionMs);
-      setTiempoActual(progreso * duracionMax);
-      animacionRef.current = progreso < 1 ? requestAnimationFrame(tick) : null;
+      const nuevoTiempo = tInicio + progreso * (duracionMax - tInicio);
+      setTiempoActual(nuevoTiempo);
+
+      if (progreso < 1) {
+        animacionRef.current = requestAnimationFrame(tick);
+      } else {
+        animacionRef.current = null;
+        setReproduciendo(false);
+      }
     }
 
     animacionRef.current = requestAnimationFrame(tick);
+  }
+
+  function togglePlayPausa() {
+    if (reproduciendo) {
+      pausarAnimacion();
+    } else {
+      reproducirAnimacion();
+    }
+  }
+
+  function pasoAnterior() {
+    pausarAnimacion();
+    setTiempoActual((t) => {
+      const nuevo = t % 1 !== 0 ? Math.floor(t) : t - 1;
+      return Math.max(0, nuevo);
+    });
+  }
+
+  function pasoSiguiente() {
+    pausarAnimacion();
+    setTiempoActual((t) => {
+      const nuevo = t % 1 !== 0 ? Math.ceil(t) : t + 1;
+      return Math.min(duracionMax, nuevo);
+    });
+  }
+
+  function reiniciar() {
+    pausarAnimacion();
+    reproducirAnimacion(0);
   }
 
   // Cancela la animación en curso si el componente se desmonta a mitad de camino.
@@ -147,7 +249,7 @@ export function Simulador() {
     setUltimosValidos({ procesos, quantum });
     setYaSimulado(true);
     setModalAbierto(false);
-    iniciarAnimacion();
+    reproducirAnimacion(0);
   }
 
   function cancelarEdicion() {
@@ -168,26 +270,89 @@ export function Simulador() {
     }
   }
 
-  // Escape cierra el modal de procesos, pero solo si ya hay una simulación
-  // corrida (si no, no hay nada detrás que mostrar y se sentiría roto).
+  // Atajos de teclado: Escape para modal, flechas ← y → para paso a paso, Espacio para play/pausa
   useEffect(() => {
-    if (!modalAbierto) return;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') cerrarModalSiSePuede();
+      if (modalAbierto) {
+        if (e.key === 'Escape') cerrarModalSiSePuede();
+        return;
+      }
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        pasoAnterior();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        pasoSiguiente();
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        togglePlayPausa();
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalAbierto, yaSimulado]);
+  }, [modalAbierto, yaSimulado, duracionMax, tiempoActual, reproduciendo]);
+
+  const minutoEntero = Math.floor(tiempoActual);
 
   return (
     <main className="simulador">
       <header className="simulador-cabecera">
         <h1>Simulador de planificación</h1>
+
+        {yaSimulado && (
+          <div className="controles-paso-a-paso" role="toolbar" aria-label="Controles paso a paso y reproducción">
+            <span className="controles-label">Paso a paso:</span>
+            <button
+              type="button"
+              className="boton-paso"
+              onClick={pasoAnterior}
+              disabled={tiempoActual <= 0}
+              title="Minuto anterior (Tecla ←)"
+              aria-label="Minuto anterior"
+            >
+              &lt;
+            </button>
+
+            <div className="indicador-minuto" title="Minuto actual / Total de la simulación">
+              <span className="minuto-numero">{minutoEntero}</span>
+              <span className="minuto-separador">/</span>
+              <span className="minuto-total">{duracionMax} min</span>
+            </div>
+
+            <button
+              type="button"
+              className="boton-paso"
+              onClick={pasoSiguiente}
+              disabled={tiempoActual >= duracionMax}
+              title="Minuto siguiente (Tecla →)"
+              aria-label="Minuto siguiente"
+            >
+              &gt;
+            </button>
+
+            <button
+              type="button"
+              className="boton-play-pausa"
+              onClick={togglePlayPausa}
+              title={reproduciendo ? 'Pausar animación (Espacio)' : 'Reproducir continuamente (Espacio)'}
+            >
+              {reproduciendo ? '⏸ Pausa' : '▶ Auto'}
+            </button>
+
+            <button
+              type="button"
+              className="boton-control-secundario"
+              onClick={reiniciar}
+              title="Reiniciar desde minuto 0"
+            >
+              ↻ Reiniciar
+            </button>
+          </div>
+        )}
+
         <div className="simulador-cabecera-acciones">
-          <button type="button" className="boton-secundario-claro" onClick={iniciarAnimacion}>
-            ↻ Reiniciar
-          </button>
           <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(true)}>
             ⚙ Editar procesos
           </button>
@@ -215,6 +380,19 @@ export function Simulador() {
               </div>
             ))}
           </div>
+
+          {/* Insignia del algoritmo más eficiente */}
+          <div
+            className="leyenda-mas-eficiente"
+            title="Algoritmo más eficiente según la métrica estándar de Sistemas Operativos: menor tiempo promedio de espera."
+          >
+            <span className="mas-eficiente-icono">🏆</span>
+            <span className="mas-eficiente-texto">Más eficiente:</span>
+            <strong className="mas-eficiente-nombre">{masEficiente.nombres}</strong>
+            <span className="mas-eficiente-detalle">
+              (espera prom: {masEficiente.minEspera.toFixed(1)} min)
+            </span>
+          </div>
         </div>
       )}
 
@@ -228,6 +406,8 @@ export function Simulador() {
           procesos={procesosOrdenados}
           info={EXPLICACIONES.FCFS}
           duracionMax={duracionMax}
+          esperaPromedio={esperas.FCFS}
+          esMasEficiente={masEficiente.ids.has('FCFS')}
         />
         <Cuadrante
           titulo="Round Robin"
@@ -239,6 +419,8 @@ export function Simulador() {
           info={EXPLICACIONES.RR}
           duracionMax={duracionMax}
           subtitulo={`q=${quantum}`}
+          esperaPromedio={esperas.RR}
+          esMasEficiente={masEficiente.ids.has('RR')}
         />
         <Cuadrante
           // El título cambia entre "SJF" y "SRTF" según lo que se esté mostrando,
@@ -255,6 +437,8 @@ export function Simulador() {
             etiqueta: variante === 'SJF' ? 'Ver SRTF' : 'Ver SJF',
             onClick: () => setVariante((v) => (v === 'SJF' ? 'SRTF' : 'SJF')),
           }}
+          esperaPromedio={esperas.variante}
+          esMasEficiente={masEficiente.ids.has('variante')}
         />
         <Cuadrante
           titulo="Prioridad"
@@ -266,6 +450,8 @@ export function Simulador() {
           info={EXPLICACIONES.PRIORIDAD}
           duracionMax={duracionMax}
           subtitulo="No apropiativa"
+          esperaPromedio={esperas.PRIORIDAD}
+          esMasEficiente={masEficiente.ids.has('PRIORIDAD')}
         />
       </div>
 
