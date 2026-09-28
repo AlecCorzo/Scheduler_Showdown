@@ -43,6 +43,29 @@ export function Simulador() {
   // porque detrás no hay nada que valga la pena ver todavía.
   const [modalAbierto, setModalAbierto] = useState(true);
   const [yaSimulado, setYaSimulado] = useState(false);
+  const [ultimosValidos, setUltimosValidos] = useState<{
+    procesos: ProcesoConPrioridad[];
+    quantum: number;
+  }>({
+    procesos: PROCESOS_INICIALES,
+    quantum: 2,
+  });
+
+  const hayNombresDuplicados = useMemo(() => {
+    const conteo = new Map<string, number>();
+    for (const p of procesos) {
+      const clave = p.nombre.trim().toLowerCase();
+      if (clave) conteo.set(clave, (conteo.get(clave) ?? 0) + 1);
+    }
+    return Array.from(conteo.values()).some((cant) => cant > 1);
+  }, [procesos]);
+
+  const hayNombresVacios = useMemo(
+    () => procesos.some((p) => p.nombre.trim() === ''),
+    [procesos],
+  );
+
+  const hayErroresProcesos = hayNombresDuplicados || hayNombresVacios;
 
   // Ordenados por llegada una sola vez: es el orden que espera el motor
   // (ver el comentario en engine/src/tipos.ts sobre Escenario.procesos) y
@@ -120,13 +143,29 @@ export function Simulador() {
   }, []);
 
   function simular() {
+    if (hayErroresProcesos) return;
+    setUltimosValidos({ procesos, quantum });
     setYaSimulado(true);
     setModalAbierto(false);
     iniciarAnimacion();
   }
 
+  function cancelarEdicion() {
+    if (yaSimulado) {
+      setProcesos(ultimosValidos.procesos);
+      setQuantum(ultimosValidos.quantum);
+      setModalAbierto(false);
+    }
+  }
+
   function cerrarModalSiSePuede() {
-    if (yaSimulado) setModalAbierto(false);
+    if (yaSimulado) {
+      if (hayErroresProcesos) {
+        cancelarEdicion();
+      } else {
+        setModalAbierto(false);
+      }
+    }
   }
 
   // Escape cierra el modal de procesos, pero solo si ya hay una simulación
@@ -147,16 +186,37 @@ export function Simulador() {
         <h1>Simulador de planificación</h1>
         <div className="simulador-cabecera-acciones">
           <button type="button" className="boton-secundario-claro" onClick={iniciarAnimacion}>
-            ↻ Reiniciar animación
+            ↻ Reiniciar
           </button>
           <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(true)}>
-            Editar procesos
+            ⚙ Editar procesos
           </button>
           <Link to="/" className="boton-secundario-claro">
-            Volver al inicio
+            ← Inicio
           </Link>
         </div>
       </header>
+
+      {/* Leyenda de procesos con su color y datos */}
+      {yaSimulado && (
+        <div className="leyenda-procesos">
+          <span className="leyenda-titulo">Procesos</span>
+          <div className="leyenda-items">
+            {procesosOrdenados.map((p) => (
+              <div key={p.nombre} className="leyenda-item">
+                <span
+                  className="leyenda-pastilla"
+                  style={{ background: colorPorProceso[p.nombre] }}
+                />
+                <span className="leyenda-nombre">{p.nombre}</span>
+                <span className="leyenda-detalle">
+                  t={p.llegada} r={p.rafaga} p={p.prioridad}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="cuadrantes">
         <Cuadrante
@@ -167,6 +227,7 @@ export function Simulador() {
           tiempoActual={tiempoActual}
           procesos={procesosOrdenados}
           info={EXPLICACIONES.FCFS}
+          duracionMax={duracionMax}
         />
         <Cuadrante
           titulo="Round Robin"
@@ -176,6 +237,8 @@ export function Simulador() {
           tiempoActual={tiempoActual}
           procesos={procesosOrdenados}
           info={EXPLICACIONES.RR}
+          duracionMax={duracionMax}
+          subtitulo={`q=${quantum}`}
         />
         <Cuadrante
           // El título cambia entre "SJF" y "SRTF" según lo que se esté mostrando,
@@ -187,6 +250,7 @@ export function Simulador() {
           tiempoActual={tiempoActual}
           procesos={procesosOrdenados}
           info={EXPLICACIONES[variante]}
+          duracionMax={duracionMax}
           toggle={{
             etiqueta: variante === 'SJF' ? 'Ver SRTF' : 'Ver SJF',
             onClick: () => setVariante((v) => (v === 'SJF' ? 'SRTF' : 'SJF')),
@@ -200,6 +264,8 @@ export function Simulador() {
           tiempoActual={tiempoActual}
           procesos={procesosOrdenados}
           info={EXPLICACIONES.PRIORIDAD}
+          duracionMax={duracionMax}
+          subtitulo="No apropiativa"
         />
       </div>
 
@@ -217,15 +283,28 @@ export function Simulador() {
               quantum={quantum}
               onCambiarProcesos={setProcesos}
               onCambiarQuantum={setQuantum}
+              colorPorProceso={colorPorProceso}
             />
             <div className="modal-acciones">
               {yaSimulado && (
-                <button type="button" className="boton-secundario-claro" onClick={() => setModalAbierto(false)}>
+                <button type="button" className="boton-secundario-claro" onClick={cancelarEdicion}>
                   Cancelar
                 </button>
               )}
-              <button type="button" className="boton-simular" onClick={simular}>
-                Simular
+              <button
+                type="button"
+                className="boton-simular"
+                onClick={simular}
+                disabled={hayErroresProcesos}
+                title={
+                  hayNombresDuplicados
+                    ? 'No se puede simular: hay procesos con nombres iguales'
+                    : hayNombresVacios
+                      ? 'No se puede simular: todos los procesos deben tener nombre'
+                      : undefined
+                }
+              >
+                ▶ Simular
               </button>
             </div>
           </div>

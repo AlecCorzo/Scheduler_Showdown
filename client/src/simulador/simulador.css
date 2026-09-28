@@ -1,151 +1,478 @@
-/* El body global usa font-size: 24px (pensado para proyector). Este módulo
-   es más una mesa de trabajo que una pantalla de salón, así que lo bajamos
-   solo aquí para que el editor y los 4 cuadrantes quepan sin scroll.
+/* =========================================================
+   SIMULADOR DE PLANIFICACIÓN — Estilos
+   ---------------------------------------------------------
+   El body global usa font-size: 24px (pensado para proyector).
+   El simulador es una "mesa de trabajo", así que trabaja en 15px.
 
-   La página usa la misma paleta clara de Inicio (fondo #ececec, texto teal
-   oscuro), pero los CUADRANTES se quedan con superficie oscura: el Gantt
-   (componentes/Gantt.tsx) pinta las etiquetas de los minutos en un gris
-   claro fijo pensado para fondo oscuro — si el cuadrante fuera claro, esas
-   etiquetas casi no se verían. Por eso el contraste queda "página clara,
-   paneles oscuros adentro", en vez de todo claro. */
+   Tema: oscuro tipo "sala de control" — fondo muy profundo,
+   paneles con vidrio (glassmorphism leve), bordes luminosos
+   de color por algoritmo. Los cuadrantes usan el tema oscuro
+   de la app (--color-fondo, --color-superficie, etc.).
+   ========================================================= */
+
+/* ── Variables de acento por cuadrante ── */
+.simulador {
+  --acento-fcfs: #4fc3f7; /* azul cielo */
+  --acento-rr: #81c784; /* verde */
+  --acento-sjf: #ffb74d; /* naranja */
+  --acento-prio: #f48fb1; /* rosa/magenta */
+}
+
+/* ── Layout raíz ── */
 .simulador {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 16px 24px;
+  padding: 12px 20px 12px;
   gap: 10px;
   overflow: hidden;
-  font-size: 15px;
-  background: var(--paleta-gris-claro);
-  color: var(--paleta-teal-oscuro);
+  font-size: 14px;
+  background: radial-gradient(ellipse at 20% 0%, #1a2744 0%, #0d1628 60%);
+  color: var(--color-texto);
 }
 
+/* ── Cabecera ── */
 .simulador-cabecera {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .simulador-cabecera h1 {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   margin: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #d8e8f8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.simulador-cabecera h1::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  box-shadow: 0 0 10px #4fc3f7;
+  animation: pulso-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulso-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .simulador-cabecera-acciones {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
+/* Botones de cabecera más compactos */
+.simulador .boton-secundario-claro {
+  font-size: 0.85rem;
+  padding: 7px 15px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 196, 226, 0.35);
+  color: #a8c8e8;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+.simulador .boton-secundario-claro:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(148, 196, 226, 0.6);
+  color: #d0e8ff;
+}
+
+/* ── Leyenda de procesos ── */
+.leyenda-procesos {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+}
+
+.leyenda-titulo {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #8bb0d0;
+  flex-shrink: 0;
+}
+
+.leyenda-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.leyenda-pastilla {
+  width: 32px;
+  height: 13px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.leyenda-nombre {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.leyenda-detalle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #7d9cb8;
+}
+
+/* ── Grilla de cuadrantes ── */
 .cuadrantes {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* ── Cuadrante base (glassmorphism oscuro) ── */
 .cuadrante {
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--color-superficie);
-  color: var(--color-texto);
-  border-left: 6px solid var(--color-lineas);
-  border-radius: 8px;
-  padding: 8px 14px;
+  background: rgba(20, 32, 60, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.25s ease;
 }
 
-.cuadrante.teal-oscuro {
-  border-left-color: var(--paleta-teal-oscuro);
+/* ── Barra de progreso de animación (bottom del cuadrante) ── */
+.cuadrante-progreso {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  transition: width 0.05s linear;
+  border-radius: 0 1px 1px 0;
+  pointer-events: none;
+  z-index: 1;
 }
-.cuadrante.teal-medio {
-  border-left-color: var(--paleta-teal-medio);
+.cuadrante.teal-oscuro .cuadrante-progreso {
+  background: var(--acento-fcfs);
 }
-.cuadrante.naranja {
-  border-left-color: var(--paleta-naranja);
+.cuadrante.teal-medio .cuadrante-progreso {
+  background: var(--acento-rr);
 }
-.cuadrante.terracota {
-  border-left-color: var(--paleta-terracota);
+.cuadrante.naranja .cuadrante-progreso {
+  background: var(--acento-sjf);
+}
+.cuadrante.terracota .cuadrante-progreso {
+  background: var(--acento-prio);
 }
 
+/* ── Estado: terminado antes que el máximo ── */
+.cuadrante.terminado-rapido {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.cuadrante.terminado-rapido::before {
+  animation: neon-pulse 1.5s ease-in-out 3;
+}
+@keyframes neon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ── Badge "más rápido" ── */
+.cuadrante-badge-rapido {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a8f0b8;
+  white-space: nowrap;
+}
+
+/* ── Grupo de título + subtítulo ── */
+.cuadrante-titulo-grupo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.cuadrante-subtitulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.9;
+  letter-spacing: 0.04em;
+  color: #a8caea;
+}
+
+/* Borde luminoso superior según algoritmo */
+.cuadrante::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+  transition: opacity 0.3s ease;
+}
+
+.cuadrante.teal-oscuro::before {
+  background: var(--acento-fcfs);
+  box-shadow: 0 0 12px var(--acento-fcfs);
+}
+.cuadrante.teal-medio::before {
+  background: var(--acento-rr);
+  box-shadow: 0 0 12px var(--acento-rr);
+}
+.cuadrante.naranja::before {
+  background: var(--acento-sjf);
+  box-shadow: 0 0 12px var(--acento-sjf);
+}
+.cuadrante.terracota::before {
+  background: var(--acento-prio);
+  box-shadow: 0 0 12px var(--acento-prio);
+}
+
+/* Sombra exterior de color al hacer hover */
+.cuadrante.teal-oscuro:hover {
+  box-shadow: 0 4px 24px rgba(79, 195, 247, 0.18);
+}
+.cuadrante.teal-medio:hover {
+  box-shadow: 0 4px 24px rgba(129, 199, 132, 0.18);
+}
+.cuadrante.naranja:hover {
+  box-shadow: 0 4px 24px rgba(255, 183, 77, 0.18);
+}
+.cuadrante.terracota:hover {
+  box-shadow: 0 4px 24px rgba(244, 143, 177, 0.18);
+}
+
+/* ── Cabecera del cuadrante ── */
 .cuadrante-cabecera {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
+  padding: 10px 14px 6px;
   flex-shrink: 0;
 }
 
 .cuadrante-cabecera h2 {
-  font-size: 1.05rem;
+  font-size: 1.35rem;
   margin: 0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+/* Color del título por cuadrante */
+.cuadrante.teal-oscuro h2 {
+  color: var(--acento-fcfs);
+}
+.cuadrante.teal-medio h2 {
+  color: var(--acento-rr);
+}
+.cuadrante.naranja h2 {
+  color: var(--acento-sjf);
+}
+.cuadrante.terracota h2 {
+  color: var(--acento-prio);
 }
 
 .cuadrante-acciones {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.boton-alterna {
-  padding: 3px 10px;
-  font-size: 0.75rem;
-  background: var(--paleta-teal-medio);
-}
-
-.boton-info {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  background: var(--paleta-naranja);
-  color: #ffffff;
-  font-size: 0.8rem;
-  font-style: italic;
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1;
+/* ── Estadística de tiempo de finalización ── */
+.cuadrante-stats {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 16px;
+  padding: 3px 14px 7px;
+  flex-shrink: 0;
 }
 
+.cuadrante-stat {
+  font-size: 0.82rem;
+  color: #7a9aba;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.cuadrante-stat-valor {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuadrante.teal-oscuro .cuadrante-stat-valor {
+  color: var(--acento-fcfs);
+}
+.cuadrante.teal-medio .cuadrante-stat-valor {
+  color: var(--acento-rr);
+}
+.cuadrante.naranja .cuadrante-stat-valor {
+  color: var(--acento-sjf);
+}
+.cuadrante.terracota .cuadrante-stat-valor {
+  color: var(--acento-prio);
+}
+
+/* ── Área del Gantt dentro del cuadrante ── */
 .cuadrante-gantt {
   flex: 1;
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 14px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.cuadrante-gantt::-webkit-scrollbar {
+  height: 4px;
+}
+.cuadrante-gantt::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cuadrante-gantt::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+/* ── Botones pequeños dentro del cuadrante ── */
+.boton-alterna {
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #a8c8e8;
+  transition: background 0.15s ease;
+}
+.boton-alterna:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.boton-info {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a8c8e8;
+  font-size: 0.72rem;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
 }
-
-/* --- Modales del simulador (editor de procesos e info por cuadrante) ---
-   La estructura (posición, tamaño, scroll) vive en tokens.css. Acá solo el
-   tema: blanco con texto teal oscuro, igual que los modales de Inicio. */
-.simulador .modal-caja {
-  background: #ffffff;
-  color: var(--paleta-teal-oscuro);
-  border: 1px solid var(--paleta-teal-medio);
-  font-size: 15px;
-  width: min(720px, 100%);
-}
-
-.simulador .modal-caja h2 {
-  color: var(--paleta-teal-oscuro);
-}
-
-.boton-simular {
-  background: var(--paleta-crema);
-  border: 2px solid var(--paleta-naranja);
+.boton-info:hover {
+  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
 
-/* --- Modal de información por algoritmo --- */
+/* ── Modales del simulador ── */
+.simulador .modal-caja {
+  background: #0f1e3a;
+  color: #c8daf0;
+  border: 1px solid rgba(148, 196, 226, 0.25);
+  font-size: 14px;
+  width: min(740px, 100%);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+}
 
+.simulador .modal-caja h2 {
+  color: #e0f0ff;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+}
+
+/* ── Botón Simular ── */
+.boton-simular {
+  font-size: 0.85rem;
+  padding: 8px 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1a6fa8 0%, #0e4d7a 100%);
+  border: 1px solid #4fc3f7;
+  color: #e8f4ff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.25);
+}
+.boton-simular:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(79, 195, 247, 0.45);
+}
+.boton-simular:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+  box-shadow: none;
+}
+
+/* ── Modal de información por algoritmo ── */
 .modal-info {
   width: min(640px, 100%);
 }
@@ -159,14 +486,17 @@
 
 .info-columnas h3 {
   margin: 0 0 6px;
-  font-size: 0.95rem;
-  color: var(--paleta-naranja);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4fc3f7;
 }
 
 .info-columnas p {
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #8aadcc;
 }
 
 @media (max-width: 560px) {
@@ -175,44 +505,103 @@
   }
 }
 
-/* --- Editor de procesos (dentro del modal) --- */
-
+/* ── Editor de procesos ── */
 .editor-procesos table {
   border-collapse: collapse;
   width: 100%;
 }
 
-.editor-procesos th,
-.editor-procesos td {
-  padding: 4px 8px;
+.editor-procesos th {
+  padding: 8px 8px;
   text-align: left;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6a8aaa;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.editor-procesos td {
+  padding: 4px 6px;
+}
+
+/* Franja de color por proceso en la primera columna */
+.editor-procesos tr.con-color td:first-child {
+  padding-left: 4px;
+  border-left: 3px solid transparent;
 }
 
 .editor-procesos input {
   width: 100%;
   min-width: 0;
-  padding: 4px 6px;
-  font-size: 0.9rem;
-  background: #ffffff;
-  border: 1px solid var(--paleta-teal-medio);
-  color: var(--paleta-teal-oscuro);
+  padding: 5px 8px;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c8daf0;
+  border-radius: 5px;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.editor-procesos input:focus {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(79, 195, 247, 0.5);
+}
+
+.editor-procesos input.input-error {
+  border-color: #e57373;
+  background-color: rgba(229, 115, 115, 0.1);
+  color: #ef9a9a;
+}
+
+.editor-procesos .mensaje-error {
+  margin: 8px 0 4px;
+  padding: 8px 12px;
+  background-color: rgba(229, 115, 115, 0.12);
+  border: 1px solid rgba(229, 115, 115, 0.3);
+  border-left: 4px solid #e57373;
+  color: #ef9a9a;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 4px;
 }
 
 .editor-procesos-acciones {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin: 8px 0;
+  margin: 10px 0;
+}
+
+.editor-procesos button {
+  font-size: 0.8rem;
+  padding: 6px 14px;
 }
 
 .quantum-editor {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
   margin: 0;
+  color: #8aadcc;
 }
 
-.quantum-editor input {
-  width: 4ch;
+.editor-procesos .quantum-editor input {
+  width: 80px;
+  min-width: 80px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 5px 8px;
+  color: #ffb74d;
+  border-color: rgba(255, 183, 77, 0.35);
+}
+
+.aviso {
+  font-size: 0.75rem;
+  color: #3a5a7a;
+  margin-top: 6px;
 }
